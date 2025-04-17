@@ -4,7 +4,10 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useFormStatus } from "react-dom";
 import { Lock, Sparkles } from "lucide-react";
+import { generateForm } from "@/actions/generateForm";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { MAX_FREE_FORM } from "@/lib/utils";
 
 type InitialState = {
   message: string;
@@ -24,6 +27,7 @@ type Props = {
 
 const GenerateFormInput: React.FC<Props> = ({ text, totalForms, isSubscribed }) => {
   const [description, setDescription] = useState<string | undefined>("");
+  const [state, formAction] = useActionState(generateForm, initialState);
   const router = useRouter();
 
   const changeEventHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -33,9 +37,18 @@ const GenerateFormInput: React.FC<Props> = ({ text, totalForms, isSubscribed }) 
     setDescription(text);
   }, [text]);
 
+  useEffect(() => {
+    if (state.success) {
+     
+      toast(state.message);
+      router.push(`/dashboard/forms/edit/${state.data.id}`);
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [router, state]);
  
   return (
-    <form  className="flex items-center gap-4 my-8">
+    <form action={formAction} className="flex items-center gap-4 my-8">
       <Input
         id="description"
         name="description"
@@ -45,6 +58,9 @@ const GenerateFormInput: React.FC<Props> = ({ text, totalForms, isSubscribed }) 
         placeholder="Write a prompt to generate form..."
         required
       />
+      {
+        isSubscribed && totalForms! <= MAX_FREE_FORM ? <SubmitButton /> : <Button disabled className="h-12"> <Lock/> Upgrade Plan</Button>
+      }
       
     </form>
   );
